@@ -1,20 +1,15 @@
-
-from tkinter import messagebox
-from tkinter import *
-from tkinter import simpledialog
+from tkinter import Tk, Text, Button, Scrollbar
+from tkinter import messagebox, simpledialog, filedialog
+from tkinter import ttk
 import tkinter
 import numpy as np
-from tkinter import simpledialog
-from tkinter import filedialog
-import os
 import cv2
-import time
 import json
 from web3 import Web3, HTTPProvider
 import traceback
 
-main = tkinter.Tk()
-main.title("Certificate Verification and Validation using Blockchain") #designing main screen
+main = Tk()
+main.title("Hall Ticket Verification") 
 main.geometry("1300x1200")
 
 global details
@@ -22,48 +17,44 @@ global details
 def readDetails(contract_type):
     global details
     details = ""
-    blockchain_address = 'http://127.0.0.1:9545' #Blokchain connection IP
+    blockchain_address = 'http://127.0.0.1:9545'
     web3 = Web3(HTTPProvider(blockchain_address))
     web3.eth.defaultAccount = web3.eth.accounts[0]
-    compiled_contract_path = 'CertificateVerification.json' #certification verification contract code
-    deployed_contract_address = '0xe68FD04167a523932c89a02B80f2815B9AF23818' #hash address to access certification verification contract
+    compiled_contract_path = 'CertificateVerification.json' 
+    deployed_contract_address = '0xe68FD04167a523932c89a02B80f2815B9AF23818' 
     with open(compiled_contract_path) as file:
-        contract_json = json.load(file)  # load contract info as JSON
-        contract_abi = contract_json['abi']  # fetch contract's abi - necessary to call its functions
+        contract_json = json.load(file) 
+        contract_abi = contract_json['abi']  
     file.close()
-    contract = web3.eth.contract(address=deployed_contract_address, abi=contract_abi) #now calling contract to access data
+    contract = web3.eth.contract(address=deployed_contract_address, abi=contract_abi) 
     if contract_type == 'company':
         details = contract.functions.getCompanyDetails().call()
     if contract_type == 'certificate':
         details = contract.functions.getCertificateDetails().call()
+    if contract_type == 'hallticket':
+        details = contract.functions.getHallTicketDetails().call()
     if len(details) > 0:
         if 'empty' in details:
             details = details[5:len(details)]        
 
 def validateDetails(data):
-    readDetails('certificate')
+    readDetails('hallticket')
     arr = details.split("\n")
     flag = 0
-    for i in range(len(arr)-1):
-        array = arr[i].split("#")
-        print(str(array[0])+" == "+data)   
+    for entry in arr:
+        array = entry.split("#")
         if array[0].strip() == data.strip():
-            text.delete('1.0', END)
-            text.update_idletasks()
-            print(str(array[0])+" ****** "+data)   
-            text.insert(END,'Student ID      : '+array[0]+"\n")
-            text.insert(END,'Student Name    : '+array[1]+"\n")
-            text.insert(END,'Course Name     : '+array[2]+"\n")
-            text.insert(END,'Contact No      : '+array[3]+"\n")
-            text.insert(END,'Address Details : '+array[4]+"\n")
-            text.insert(END,'Date & Time     : '+array[5]+"\n")
-            text.insert(END,'Certificate Signature (Hash Code) : '+array[6])
+            text.delete('1.0', 'end')
+            text.insert('end', 'Student Roll No  : ' + array[0] + "\n")
+            text.insert('end', 'Digital Signature: ' + array[1]+"\n")
+            text.insert('end', "Hall Ticket Verified Successfully")
             text.update_idletasks()
             flag = 1
             break
+
     if flag == 0:
-        text.delete('1.0', END)
-        text.insert(END,"Certificate Verification Failed. QR Code does not exists")
+        text.delete('1.0', 'end')
+        text.insert('end', "Hall Ticket Verification Failed. Roll No not found in blockchain data")
         text.update_idletasks()
 
 def runWebCam():
@@ -91,30 +82,30 @@ def runWebCam():
 def exit():
     main.destroy()
 
-font = ('times', 13, 'bold')
-title = Label(main, text='Certificate Verification and Validation using Blockchain')
-title.config(bg='LightGoldenrod1', fg='medium orchid')  
+font = ('Arial', 13, 'bold')
+title = tkinter.Label(main, text='Hall Ticket Verification')
+title.config(bg='mediumorchid', fg='white')  
 title.config(font=font)           
 title.config(height=3, width=120)       
-title.place(x=0,y=5)
+title.pack()
 
-font1 = ('times', 12, 'bold')
-text=Text(main,height=20,width=100)
-scroll=Scrollbar(text)
+frame = ttk.Frame(main, padding="20")
+frame.pack(expand=True)
+
+font1 = ('Arial', 12, 'bold')
+text = Text(frame, height=20, width=100)
+scroll = Scrollbar(frame, command=text.yview)
 text.configure(yscrollcommand=scroll.set)
-text.place(x=480,y=100)
-text.config(font=font1)
+text.pack(side="left", fill="both", expand=True)
+scroll.pack(side="right", fill="y")
 
-
-font1 = ('times', 12, 'bold')
 uploadButton = Button(main, text="Start Webcam", command=runWebCam)
-uploadButton.place(x=50,y=100)
 uploadButton.config(font=font1)  
+uploadButton.pack(pady=10)
 
 exitButton = Button(main, text="Exit", command=exit)
-exitButton.place(x=50,y=150)
 exitButton.config(font=font1) 
+exitButton.pack(pady=10)
 
-
-main.config(bg='OliveDrab2')
+main.config(bg='lightgray')
 main.mainloop()

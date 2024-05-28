@@ -24,23 +24,8 @@ contract CertificateVerification {
         return certificate_details;
     }
 
-    constructor() {
+    constructor() public {
         company_details = "empty";
         certificate_details = "empty";
-    }
-
-    function deposit() public payable {
-        balances[msg.sender] += msg.value;
-    }
-
-    function transfer(address to, uint256 value) public {
-        require(balances[msg.sender] >= value, "Insufficient balance");
-        balances[msg.sender] -= value;
-        balances[to] += value;
-        emit Transfer(msg.sender, to, value);
-    }
-
-    function getBalance(address account) public view returns (uint256) {
-        return balances[account];
     }
 }
